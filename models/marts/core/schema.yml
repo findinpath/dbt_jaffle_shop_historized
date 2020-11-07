@@ -1,0 +1,31 @@
+version: 2
+
+models:
+
+  - name: fct_orders
+    description: This table contains historized information about status changes for the orders.
+
+    columns:
+      - name: load_id
+        description: Monotonically increasing id for the staged order changes.
+        tests:
+          - unique
+          - not_null
+
+      - name: order_id
+        description: This is a unique identifier for an order
+        tests:
+          - unique
+          - not_null
+
+      - name: valid_from
+        description: Date (UTC) corresponding to the start of the validity range.
+
+      - name: valid_to
+        description: Date (UTC) corresponding to the end of the validity range.
+
+      - name: status
+        description: '{{ doc("orders_status") }}'
+        tests:
+          - accepted_values:
+              values: ['placed', 'shipped', 'completed', 'return_pending', 'returned']

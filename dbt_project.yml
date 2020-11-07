@@ -1,0 +1,28 @@
+name: 'jaffle_shop'
+version: '1.0'
+config-version: 2
+require-dbt-version: ">=0.18.1"
+
+profile: 'jaffle_shop'
+
+source-paths: ["models", "sources"]
+analysis-paths: ["analysis"]
+test-paths: ["tests"]
+data-paths: ["data"]
+macro-paths: ["macros"]
+
+# directory which will store compiled SQL files
+target-path: "target"
+
+# directories to be removed by `dbt clean`
+clean-targets:
+  - "target"
+  - "dbt_modules"
+  - "logs"
+
+models:
+  jaffle_shop:
+      materialized: table
+      staging:
+        materialized: table
+        tags: ["staging", "hourly"]

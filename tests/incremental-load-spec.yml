@@ -1,0 +1,75 @@
+---
+version: '0.1'
+
+identifiers:
+  - identifier: order_id_generator
+    attributes:
+      - field: id
+        generator: unique_integer
+
+# All the raw sources tables
+sources:
+  - source: raw_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+  - source: fct_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# We could test more of the models built by dbt.  But at the end of the day,
+# we really only care about the tables that our end users use.
+targets:
+
+  - target: fct_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# Typically, we have a separate scenario for each target table, however your
+# project's needs may differ.
+scenarios:
+
+  - scenario: Building fct_orders out of the raw_orders when the fct_orders table contains already a few entries
+
+    cases:
+      - case: The historized `fct_orders` table contains already a few entries corresponding to `order1`.
+
+        factory:
+          data:
+            - source: raw_orders
+              table: |
+                | load_id    | order_id   | updated_at        | status               |
+                | -          | -          | -                 |                      |
+                | 10         | order2     | 2018-01-02        | placed               |
+                | 11         | order1     | 2018-01-04        | completed            |
+
+            - source: fct_orders
+              table: |
+                | id             | order_id | load_id     | status                   | md5_hash                         | valid_from                    | valid_to                         |
+                | -              | -        | -           | -                        | -                                | -                             | -                                |
+                | 1              | order1   | 1           | placed                   | 6ebb25b39f65cab5efa469977b9479e2 | 2018-01-01                    | 2018-01-03                       |
+                | 2              | order1   | 3           | shipped                  | 8407efe4e76e884909955a5e7293661e | 2018-01-03                    | {NULL}                           |
+
+        expected:
+          data:
+            - target: fct_orders
+              table: |
+                | order_id | load_id     | status                   | valid_from                    | valid_to                         |
+                | -        | -           | -                        | -                             | -                                |
+                | order1   | 1           | placed                   | 2018-01-01                    | 2018-01-03                       |
+                | order1   | 3           | shipped                  | 2018-01-03                    | 2018-01-04                       |
+                | order1   | 11          | completed                | 2018-01-04                    | {NULL}                           |
+                | order2   | 10          | placed                   | 2018-01-02                    | {NULL}                           |
+              by:
+                - order_id
+                - load_id

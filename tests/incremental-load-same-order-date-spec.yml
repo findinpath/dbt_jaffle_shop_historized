@@ -1,0 +1,84 @@
+---
+version: '0.1'
+
+# For jaffle_shop, a single generic identifier is sufficient.  We'll prefix
+# all named identifiers with something that indicates what they are - cust1, order1, etc
+identifiers:
+  - identifier: order_id_generator
+    attributes:
+      - field: id
+        generator: unique_integer
+
+# All the raw sources used in jaffle_shop
+sources:
+
+  - source: raw_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+  - source: fct_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# We could test more of the models built by dbt.  But at the end of the day,
+# we really only care about the tables that our end users use.
+targets:
+
+  - target: fct_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# Typically, we have a separate scenario for each target table, however your
+# project's needs may differ.
+scenarios:
+
+  - scenario: Building fct_orders out of the raw_orders when the fct_orders table contains already an entry with the same order date as the new staging entry
+
+    cases:
+      - case: >
+          The historized `fct_orders` table contains already a few entries corresponding to `order1`.
+          The new entry corresponding to the `order1` from the stage table `stg_orders` has the date `2018-01-03`
+          which is the same as the last date historized for `order1` in `fct_orders`.
+          Due to the fact that `load_id` from the staging table is greater as the one from the fact table, the
+          entry shoul be correctly interpreted as a new entry and should therefor end the validity of the entry
+          from the fact table.
+
+        factory:
+          data:
+            - source: raw_orders
+              table: |
+                | load_id    | order_id   | updated_at        | status               |
+                | -          | -          | -                 |                      |
+                | 10         | order2     | 2018-01-02        | placed               |
+                | 11         | order1     | 2018-01-03        | completed            |
+
+            - source: fct_orders
+              table: |
+                | id             | order_id | load_id     | status                   | md5_hash                         | valid_from                    | valid_to                         |
+                | -              | -        | -           | -                        | -                                | -                             | -                                |
+                | 1              | order1   | 1           | placed                   | 6ebb25b39f65cab5efa469977b9479e2 | 2018-01-01                    | 2018-01-03                       |
+                | 2              | order1   | 3           | shipped                  | 8407efe4e76e884909955a5e7293661e | 2018-01-03                    | {NULL}                           |
+
+        expected:
+          data:
+            - target: fct_orders
+              table: |
+                | order_id | load_id     | status                   | valid_from                    | valid_to                         |
+                | -        | -           | -                        | -                             | -                                |
+                | order1   | 1           | placed                   | 2018-01-01                    | 2018-01-03                       |
+                | order1   | 3           | shipped                  | 2018-01-03                    | 2018-01-03                       |
+                | order1   | 11          | completed                | 2018-01-03                    | {NULL}                           |
+                | order2   | 10          | placed                   | 2018-01-02                    | {NULL}                           |
+              by:
+                - order_id
+                - load_id

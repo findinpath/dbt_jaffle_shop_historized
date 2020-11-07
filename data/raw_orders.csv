@@ -1,0 +1,13 @@
+load_id,order_id,updated_at,status
+1,1,2018-01-01,placed
+2,1,2018-01-03,shipped
+3,2,2018-01-01,placed
+4,1,2018-01-05,completed
+5,2,2018-01-04,shipped
+6,2,2018-01-08,completed
+7,2,2018-01-10,return_pending
+8,2,2018-01-15,returned
+9,3,2018-01-20,placed
+9,3,2018-01-21,shipped
+10,3,2018-02-04,completed
+11,4,2018-02-01,placed

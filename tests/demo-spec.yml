@@ -1,0 +1,82 @@
+---
+version: '0.1'
+
+# For jaffle_shop, a single generic identifier is sufficient.  We'll prefix
+# all named identifiers with something that indicates what they are - cust1, order1, etc
+identifiers:
+  - identifier: order_id_generator
+    attributes:
+      - field: id
+        generator: unique_integer
+
+# All the raw sources used in jaffle_shop
+sources:
+
+  - source: raw_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# We could test more of the models built by dbt.  But at the end of the day,
+# we really only care about the tables that our end users use.
+targets:
+
+  - target: fct_orders
+    identifier_map:
+      - column: order_id
+        identifier:
+          name: order_id_generator
+          attribute: id
+
+
+# Typically, we have a separate scenario for each target table, however your
+# project's needs may differ.
+scenarios:
+  - scenario: Building fct_orders out of the raw_orders when the fct_orders table is empty
+
+    cases:
+      - case: >
+          Basic full refresh loading of the historized fact table `fct_orders`
+
+          Tested scenarios:
+          - order1 : the expected historized entries should follow the representation: placed > shipped > completed
+          - order2 : the expected historized entries should follow the representation: placed
+          - order3 : contains duplicated (with the same `updated_at` and `status` values) entries.
+          The duplicates should be filtered out from the processing.
+          The expected historized entries should follow the representation: placed > shipped > return_pending
+
+        factory:
+          data:
+            - source: raw_orders
+              table: |
+                | load_id    | order_id   | updated_at        | status               |
+                | -          | -          | -                 |                      |
+                | 1          | order1     | 2018-01-01        | placed               |
+                | 2          | order2     | 2018-01-02        | placed               |
+                | 3          | order1     | 2018-01-03        | shipped              |
+                | 4          | order1     | 2018-01-04        | completed            |
+                | 5          | order3     | 2018-01-04        | placed               |
+                | 6          | order3     | 2018-01-04        | placed               |
+                | 7          | order3     | 2018-01-04        | placed               |
+                | 8          | order3     | 2018-01-04        | shipped              |
+                | 9          | order3     | 2018-01-06        | return_pending       |
+
+        expected:
+          data:
+            - target: fct_orders
+              table: |
+                | order_id | load_id     | status                   | valid_from                    | valid_to                         |
+                | -        | -           | -                        | -                             | -                                |
+                | order1   | 1           | placed                   | 2018-01-01                    | 2018-01-03                       |
+                | order1   | 3           | shipped                  | 2018-01-03                    | 2018-01-04                       |
+                | order1   | 4           | completed                | 2018-01-04                    | {NULL}                           |
+                | order2   | 2           | placed                   | 2018-01-02                    | {NULL}                           |
+                | order3   | 5           | placed                   | 2018-01-04                    | 2018-01-04                       |
+                | order3   | 8           | shipped                  | 2018-01-04                    | 2018-01-06                       |
+                | order3   | 9           | return_pending           | 2018-01-06                    | {NULL}                           |
+              by:
+                - order_id
+                - load_id

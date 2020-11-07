@@ -1,0 +1,7 @@
+.idea/
+target/
+tests/__pycache__/
+dbt_modules/
+logs/
+venv/
+**/.DS_Store
