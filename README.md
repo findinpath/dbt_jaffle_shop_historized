@@ -58,6 +58,11 @@ WHERE valid_from < '2018-03-01' AND valid_to >= '2018-02-01'
 AND status = 'shipped';
 ```
 
+**NOTE** in the image below that the [`valid_from`, `valid_to`] date ranges corresponding to an order are adjacent to
+each other. Only the latest entry corresponding to an order is unbounded (`valid_to` is set to `NULL`) 
+
+![historized-order-status-changes.png](docs/historized-order-status-changes.png)
+
 This project provides a proof of concept on how to historize order status changes with [dbt](https://www.getdbt.com/)
 models on [Snowflake](https://www.snowflake.com/) database. 
 
