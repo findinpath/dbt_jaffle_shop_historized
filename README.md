@@ -63,6 +63,14 @@ models on [Snowflake](https://www.snowflake.com/) database.
 
 ## Getting started with dbt
 
+As described in the [introduction to dbt](https://docs.getdbt.com/docs/introduction) :
+
+> dbt (data build tool) enables analytics engineers to transform data in their warehouses by simply writing select statements. 
+> dbt handles turning these select statements into tables and views.
+  
+> dbt does the T in ELT (Extract, Load, Transform) processes – it doesn't extract or load data, 
+> but it’s extremely good at transforming data that’s already loaded into your warehouse.
+
 The [jaffle_shop](https://github.com/fishtown-analytics/jaffle_shop)
 project is a useful minimum viable dbt project to get new [dbt](https://www.getdbt.com/) users 
 up and running with their first dbt project. It includes [seed](https://docs.getdbt.com/docs/building-a-dbt-project/seeds)
@@ -294,6 +302,16 @@ Expected:
 3   order2      10     placed  2018-01-02      {NULL}
 ```
 
+As already mentioned in the beginning of this document, this project represents a proof of concept and not necessarily a
+recipe on how to setup the test automation in the build pipeline for `dbt` when working with the Snowflake database.
+
+When running the tests for this project, there can be noticed that it takes quite some time to execute them.This happens
+in part because Snowflake takes roughly a bit under a second to run any kind of query, even if the query is performed on
+an empty database.
+
+Nevertheless, having automated tests for the `dbt` models, even though they are slow, is much better than doing the 
+tests by hand or not doing them at all and leaving production as a playground for the developed models.  
+
 ---
 For more information on dtspec:
 
@@ -312,4 +330,6 @@ This proof of concept project compiles together several topics:
 - historization of entities
 
 into a functioning prototype for historizing order status changes.
+
+
 Feel free to provide feedback or alternative implementations to any of the topics presented in this project. 
