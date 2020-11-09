@@ -54,7 +54,7 @@ AND status = 'shipped';
 -- number of orders in shipment during the month of February 2018
 SELECT COUNT(DISTINCT(order_id))
 FROM jaffle_shop.fct_orders
-WHERE valid_from < '2018-03-01' AND valid_to >= '2018-02-01'
+WHERE valid_from < '2018-03-01' AND (valid_to >= '2018-02-01' OR valid_to IS NULL)
 AND status = 'shipped';
 ```
 
