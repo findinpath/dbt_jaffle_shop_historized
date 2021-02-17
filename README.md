@@ -122,7 +122,7 @@ jaffle_shop:
       role: accountadmin
       threads: 4
       database: playground
-      warehouse: analysis_wh_xs
+      warehouse: your-warehouse-name
       schema: jaffle_shop
 config:
   send_anonymous_usage_stats: False
